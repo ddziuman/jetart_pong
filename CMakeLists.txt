@@ -23,6 +23,13 @@ add_executable(pong
 
 set(DIST_DIR ${CMAKE_BINARY_DIR}/dist)
 
+# (getting runtime dlls from the compiler)
+get_filename_component(COMPILER_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
+set(LIBSTDCPP_DLL ${COMPILER_DIR}/libstdc++-6.dll)
+set(LIBGCC_DLL ${COMPILER_DIR}/libgcc_s_seh-1.dll)
+# (msys2/ucrt64 specific:)
+set(LIBWINPTHREAD_DLL ${COMPILER_DIR}/libwinpthread-1.dll)
+
 add_custom_target(dist
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${DIST_DIR}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${DIST_DIR}
@@ -30,15 +37,31 @@ add_custom_target(dist
     COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_FILE:pong>
         ${DIST_DIR}
+
     COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_FILE:SFML::Graphics>
         ${DIST_DIR}
+
     COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_FILE:SFML::Window>
         ${DIST_DIR}
+
     COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_FILE:SFML::System>
         ${DIST_DIR}
+
+    COMMAND ${CMAKE_COMMAND} -E copy
+        ${LIBSTDCPP_DLL}
+        ${DIST_DIR}
+    
+    COMMAND ${CMAKE_COMMAND} -E copy
+        ${LIBGCC_DLL}
+        ${DIST_DIR}
+    
+    COMMAND ${CMAKE_COMMAND} -E copy
+        ${LIBWINPTHREAD_DLL}
+        ${DIST_DIR}
+
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/assets
         ${DIST_DIR}/assets

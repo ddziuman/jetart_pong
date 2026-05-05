@@ -73,10 +73,20 @@ target_link_libraries.
 research).
 
 8. Код повинен компілюватися під Win64
-- проєкт можна встановити напряму через github releases (готовий бінарник executable) під Windows
-- проєкт можна зібрати із source code, для цього склонуйте даний репозиторій локально, та впевніться в наявності
-CMake 3.28+, а також компілятора, який підтримує -std=c++20.
-For more information on how to build SFML-based project from sources, check out [this](https://github.com/SFML/cmake-sfml-project)
+- проєкт можна встановити напряму через github releases (готовий бінарник executable) під Win64
+- проєкт можна зібрати із source code, для цього завантажте даний репозиторій локально, та впевніться в наявності
+CMake 3.28+, а також наявності С++ compiler toolchain в системі, який підтримує -std=c++20.
+Даний білд базується на MSYS2/Mingw/ucrt64 compiler toolchain та робився під Win64. Якщо ви плануєте компілювати з source code,
+використовуються наступні команди:
+```
+(project root)
+cmake -B build/
+cmake --build build
+./build/pong.exe
+```
+Якщо якась із цих команд повертає помилку, тоді впевніться в тому, що ви маєте налаштований CMake та compiler toolchain,
+доданий до PATH evironment variable, а також передаєте відповідні імплементації C++-runtime
+в CMakeLists.txt (замість libstdc++, libgcc, libwinpthread).
 
 9. До завдання додано README
 - цей файл містить короткий опис ходу базової імплементації Pong.
