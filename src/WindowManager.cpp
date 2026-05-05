@@ -8,23 +8,31 @@
 #include <optional>
 
 WindowManager::WindowManager()
-: WindowManager("Pong", 60)
+: WindowManager("Pong", 60, sf::State::Fullscreen)
 {}
 
-WindowManager::WindowManager(std::string_view title, unsigned int frameLimit)
+WindowManager::WindowManager(std::string_view title, unsigned int frameLimit, sf::State mode)
 : m_videoMode {sf::VideoMode::getDesktopMode()}
-, m_window {m_videoMode, title, sf::State::Fullscreen}
-, m_renderSize {m_window.getSize()}
-, m_center {m_renderSize.x / 2, m_renderSize.y / 2}
+, m_window {m_videoMode, title, mode}
 {
         m_window.setFramerateLimit(frameLimit);
+        m_window.setKeyRepeatEnabled(false);
+}
+
+sf::Vector2u WindowManager::renderSize() {
+    return m_window.getSize();
+}
+
+sf::Vector2u WindowManager::center() {
+    const auto size {renderSize()};
+    return {size.x * 0.5, size.y * 0.5};
 }
 
 float WindowManager::normalizePct(float pct) {
     if (pct < -100 || pct > 100) {
         return 0.5;
     }
-    return (pct < 0 ? ((pct + 100)) : pct) / 100;
+    return (pct < 0 ? ((pct + 100)) : pct) * 0.01;
 }
 
 sf::RenderWindow& WindowManager::getWindow() {
@@ -32,36 +40,25 @@ sf::RenderWindow& WindowManager::getWindow() {
 }
 
 float WindowManager::relX(float pct) {// +(1-100)% from the left/top / -(1-100)% if from the right/bottom
-    return m_renderSize.x * normalizePct(pct);
+    return renderSize().x * normalizePct(pct);
 }
 
 float WindowManager::relY(float pct) {
-    return m_renderSize.y * normalizePct(pct);
+    return renderSize().y * normalizePct(pct);
 }
 
 float WindowManager::offsetX(float offset) {
-    return offset < 0 ? m_renderSize.x + offset : offset;
+    return offset < 0 ? renderSize().x + offset : offset;
 }
 
 float WindowManager::offsetY(float offset) {
-    return offset < 0 ? m_renderSize.y + offset : offset;
+    return offset < 0 ? renderSize().y + offset : offset;
 }
 
 float WindowManager::centerOffsetX(float offset) {
-    return m_center.x + offset;
+    return center().x + offset;
 }
 
 float WindowManager::centerOffsetY(float offset) {
-    return m_center.y + offset;
-}
-
-void WindowManager::handleEvents() {
-    while (const std::optional event {m_window.pollEvent()}) {
-        if (event->is<sf::Event::Closed>() ||
-            event->is<sf::Event::KeyPressed>() &&
-            event->getIf<sf::Event::KeyPressed>()->code == sf::Keyboard::Key::Escape)
-            m_window.close();
-        
-        // other events
-    }
+    return center().y + offset;
 }

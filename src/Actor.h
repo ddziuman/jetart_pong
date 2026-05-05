@@ -1,15 +1,25 @@
 #ifndef ACTOR_H
 #define ACTOR_H
-#include <cstddef>          // std::size_t
-#include <tuple>            // std::tuple, std::get<C>
-#include <unordered_map>    // std::unordered_map
-#include <typeinfo>         // std::type_info
-#include <type_traits>      // std::is_base_of_v<Base, Derived>
-#include <utility>          // std::forward
-#include <concepts>         // std::derived_from, std::constructible_from
-#include "Components.h"     // component structs
+#include <cstddef>
+#include <tuple>
+#include <unordered_map>
+#include <typeinfo>
+#include <type_traits>
+#include <utility>
+#include <concepts>
+#include "Components.h"
 
-using Components = std::tuple<CTransform, CShapeCircle, CShapeRectangle, CHealth, CColliderBox, CColliderCircle, CInput, CAI>;
+using Components = std::tuple<
+    CTransform, 
+    CShapeCircle,
+    CShapeRectangle,
+    CHealth, 
+    CColliderBox,
+    CColliderCircle, 
+    CInput, 
+    CAI,
+    CTextScore
+>;
 
 class Actor {
 public:
@@ -17,7 +27,8 @@ public:
         PlayerPaddle,
         BotPaddle,
         Score,
-        Ball
+        Ball,
+        Net
     };
 
 private:

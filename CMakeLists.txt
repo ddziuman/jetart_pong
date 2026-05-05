@@ -16,16 +16,38 @@ add_executable(pong
                 src/main.cpp
                 src/Engine.cpp
                 src/WindowManager.cpp
-                src/Timer.cpp
-                src/PlayerPaddle.cpp
-                src/Actor.cpp
                 src/ActorManager.cpp
+                src/Random.cpp
+                src/ResourceManager.cpp
 )
 
+set(DIST_DIR ${CMAKE_BINARY_DIR}/dist)
+
+add_custom_target(dist
+    COMMAND ${CMAKE_COMMAND} -E remove_directory ${DIST_DIR}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${DIST_DIR}
+
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_FILE:pong>
+        ${DIST_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_FILE:SFML::Graphics>
+        ${DIST_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_FILE:SFML::Window>
+        ${DIST_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_FILE:SFML::System>
+        ${DIST_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/assets
+        ${DIST_DIR}/assets
+
+    DEPENDS pong
+)
 
 target_compile_features(pong PRIVATE cxx_std_20)
 
-
-target_link_libraries(pong PRIVATE SFML::Graphics) # SFML::Network or SFML::Audio modules here
+target_link_libraries(pong PRIVATE SFML::Graphics)
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT pong)

@@ -1,117 +1,95 @@
-# CMake SFML Project Template
+1. Знання мови C++.
+- використання ряду складених класових типів (Actor, ActorManager, ряд компонентів, ResourceManager, тощо)
+- розуміння pass by value, pass by reference, pass by address
+- проєкт логічно розділено на headers та source code файли, для перевикористання вже скомпільованих частин коду.
+- розуміння iterator invalidation (наприклад, в ActorManager::update(), що фактично є простеньким "garbage collector"-ом в рушії)
+- використання lambda-функцій
+- використання підходів templated programming (function templates, class templates, трохи C++20 concepts)
 
-This repository template should allow for a fast and hassle-free kick start of your next SFML project using CMake.
-Thanks to [GitHub's nature of templates](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template), you can fork this repository without inheriting its Git history.
+2. Знання ООП та вміння його використовувати
+- вся гра представляє собою багаторівневу композицію із абстракцій, яка починається з Engine (верхній рівень),
+продовжується спеціалізованими "менеджерами" (ActorManager, WindowManager), далі рівень ігрових об'єктів на сцені (Actors),
+кожен із яких має свій набір ігрових компонентів (Components), таких як CTransform, CAI, CShapeCircle, CColliderBox, і т.д.
+- код декомпозований на спеціалізовані модулі (звісно, його можна було і далі декомпозувати, особливо Engine.cpp).
+Такі речі як генерація випадкових чисел, управління вікном, управління завантаженими ресурсами, управління акторами на сцені,
+винесені в окремі невеликі модулі. Сама project folder architecture плоска, так як файлів не досить багато.
+- по можливості всюди витримано принципи інкапсуляції, використовуючи класові access specifiers (private/protected/public),
+а також наприклад ResourceManager, в якому інкапсуляція виражається за допомогою unnamed namespace.
+- особливо продемонструвати принцип наслідування (inheritance) тут не вдасться через відсутність великої "ієрархічності"
+в самій грі. Але натомість основні ігрові компоненти акторів побудовані на великому ієрархічному дереві класів із графічної бібліотеки SFML, наприклад
+(sf::Drawable, sf::Transformable --> sf::Text, sf::Shape --> sf::CircleShape, sf::RectangleShape, і т.д.)
+- принцип поліморфізму в основному використовується статичного плану (через function overloading та templates).
+Динамічний поліморфізм використовується неявно бібліотекою SFML.
 
-The template starts out very basic, but might receive additional features over time:
+3. Вміння використовувати STL
+- для зберігання "всіх" акторів на сцені було обрано std::vector (динамічний масив)
+- для по-тегового доступу до "конкретних" акторів використовується std::unordered_map (хеш-таблиця)
+- використання <random> для генерації випадкових чисел по int-розподілу за допомогою random_device та алгоритму Mersenne-Twister
+(std::mt19937). Необхідний для рандомного спавну нових м'ячиків на екрані.
+- використання <memory> для того щоб тримати всі об'єкти на сцені (актори) на кучі, використовуючи dynamic memory allocation,
+при цьому трмаючи посилання на них через std::shared_ptr, який забезпечить їх знищення в разі закінчення кількості посилань.
+Чому std::shared_ptr? Для того щоб можна було розділити основну колекцію поінтерів на всі актори, та колекцію, що буде
+використана для по-тегового пошуку акторів.
+- використання <algorithm> для std::erase_if, std::for_each та лямбда-функцій.
+- використання <array> для колекції статично завантажених шрифтів
+- використання тригонометричних функцій (std::cosf(), std::sinf(), std::atan2f()) із <cmath> для імплементації
+базових рухів з постійною швидкістю під заданими кутами, collision detection та collision resolve, тощо.
+- використання <iostream> та <cassert> для runtime-дебагу.
+- використання <string> та <string_view> для роботи з рядковими типами.
 
-- Basic CMake script to build your project and link SFML on any operating system
-- Basic [GitHub Actions](https://github.com/features/actions) script for all major platforms
+4. Акуратно оформлених та структурований код.
+- використовується уніфікований формат написання більшості statements, однаковий indentation через табуляцію на 4 пробіли на 1 рівень вкладеності.
+- для всіх приватних data members в класах обов'язково використовується нотація "m_" щоб це позначити, а також відрізняти від параметрів функцій або інших змінних.
+- код в основному розбитий на модулі (header + source file). Ігрові механіки/системи runtime-рушія Engine в більшості своїй
+визначені в Engine.cpp. В якості рефакторинга, було б непогано ще повиносити окремі системи (колізія, рух, рендер), в подібні
+окремі системні класи та файли.
+- інструментів для автоматичного форматингу по типу .clang-format не було використано.
 
-## Quick start
+5. Показати вміння підключати та використовувати зовнішні бібліотеки.
+- із зовнішніх бібліотек використовується лише графічна бібліотека SFML, що забезпечує високорівневий API для
+роботи із вікнами, їх відмальовкою, позиціонуванням та рухом об'єктів всередині, тощо.
+- для збірки проєкту використовується meta-build system CMake, та відповідний файл налаштувань CMakeLists.txt, однорівневий.
+Там же й знаходяться директиви для підвантаження бінарників SFML, їх деплойменту та лінкування як бібліотеки за допомогою
+target_link_libraries.
+Там же знаходяться всі обов'язкові базові налаштування. Звісно, їх можно доповнювати за потреби.
 
-### Command line
+6. Показати знання архітектури ігрових рушіїв
+- для імплементації ігрового рушія з точки зору архітектури використовувався кастомний гібридний Entity-Component підхід на базі ООП (не чиста Entity-Component-System! це було б значно складніше і трошки оверкілл). Всі ігрові об'єкти, які розміщені на сцені є інстансами Actor. Всі ігрові компоненти, які
+приєднуються до акторів, це наслідники від Component. Формат зберігання та управління компонентами в акторах обраний
+не самий вдалий (через std::tuple), і він може бути покращений. Такий підхід було обрано через його відносну простоту та
+ефективність. Всі компоненти це pure data. Весь функціонал реалізовується в Engine.cpp в якості спеціалізованих виділених
+функцій. Звісно, можна були їх також виділити в окремі класи-системи, але на цьому прикладі це б тільки збільшило complexity.
+- основний ігровий цикл виконується в функції run() класу Engine
+- там проводиться обробка ігрових івентів-інпутів від користувача, замір deltaTime для frame-independent рухів, 'garbage collection' неживих об'єктів за допомогою ActorManager (наприклад, м'ячиків які вилетіли за край екрану), респавн м'ячиків,
+скрипт enemy-ракетки, обробка руху всіх об'єктів на сцені, обробка всіх колізій, а також власне рендер (clear/draw/display)
 
-1. Install [Git](https://git-scm.com/downloads) and [CMake](https://cmake.org/download/). Use your system's package manager if available.
-2. Follow [GitHub's instructions](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template) for how to use their project template feature to create your own project. If you don't want to use GitHub, see the section below.
-3. Clone your new GitHub repo and open the repo in your text editor of choice.
-4. Open [CMakeLists.txt](CMakeLists.txt). Rename the project and the target name of the executable to whatever name you want. Make sure to change all occurrences.
-5. If you want to add or remove any .cpp files, change the source files listed in the `add_executable` call in CMakeLists.txt to match the source files your project requires. If you plan on keeping the default main.cpp file then no changes are required.
-6. If your code uses the Audio or Network modules then add `SFML::Audio` or `SFML::Network` to the `target_link_libraries` call alongside the existing `SFML::Graphics` library that is being linked.
-7. If you use Linux, install SFML's dependencies using your system package manager. On Ubuntu and other Debian-based distributions you can use the following commands:
-   ```
-   sudo apt update
-   sudo apt install \
-       libxrandr-dev \
-       libxcursor-dev \
-       libxi-dev \
-       libudev-dev \
-       libfreetype-dev \
-       libflac-dev \
-       libvorbis-dev \
-       libgl1-mesa-dev \
-       libegl1-mesa-dev \
-       libfreetype-dev \
-       libharfbuzz-dev \
-       libmbedtls-dev \
-       libssh2-1-dev
-   ```
-8. Configure and build your project. Most popular IDEs support CMake projects with very little effort on your part.
+7. Показати використання паттернів проєктування
+- по патернам в мене не дуже, але якщо брати програмні патерни то ActorManager - це Factory для Actor. При цьому, явно
+гарантується що Actor не буде створено напряму через private constructor. Якщо брати архітектурні патерни, то намагався
+зробити щось ближче до ECS (але це звісно нетрадиційний підхід через певну складність останнього).
+- якщо пошукати, то звісно знайдеться багато місць де можна покращити рушій, наприклад перейти повністю на традиційний ECS,
+використовувати розумні MemoryPool для управління акторами, використовувати Observer для білш ефективної обробки івентів або
+організації менш зв'язанної взаємодії між об'єктами (але особисто для мене імплементувати всі ці штуки займе багато часу та
+research).
 
-   - [VS Code](https://code.visualstudio.com) via the [CMake extension](https://code.visualstudio.com/docs/cpp/cmake-linux)
-   - [Visual Studio](https://docs.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio?view=msvc-170)
-   - [CLion](https://www.jetbrains.com/clion/features/cmake-support.html)
-   - [Qt Creator](https://doc.qt.io/qtcreator/creator-project-cmake.html)
+8. Код повинен компілюватися під Win64
+- проєкт можна встановити напряму через github releases (готовий бінарник executable) під Windows
+- проєкт можна зібрати із source code, для цього склонуйте даний репозиторій локально, та впевніться в наявності
+CMake 3.28+, а також компілятора, який підтримує -std=c++20.
+For more information on how to build SFML-based project from sources, check out [this](https://github.com/SFML/cmake-sfml-project)
 
-   Using CMake from the command line is straightforward as well.
-   Be sure to run these commands in the root directory of the project you just created.
+9. До завдання додано README
+- цей файл містить короткий опис ходу базової імплементації Pong.
 
-   ```
-   cmake -B build
-   cmake --build build
-   ```
-
-9. Enjoy!
-
-### Visual Studio
-
-Using a Visual Studio workspace is the simplest way to get started on windows.
-
-1. Ensure you have the [required components installed](https://learn.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio#installation).
-2. Follow [GitHub's instructions](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template) for how to use their project template feature to create your own project.
-3. If you have already cloned this repo, you can [open the folder](https://learn.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio0#ide-integration).
-4. If not, you can [clone it directly in Visual Studio](https://learn.microsoft.com/en-us/visualstudio/get-started/tutorial-open-project-from-repo).
-
-Visual Studio should automatically configure the CMake project, then you can build and run as normal through Visual Studio. See the links above for more details.
-
-## Upgrading SFML
-
-SFML is found via CMake's [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html) module.
-FetchContent automatically downloads SFML from GitHub and builds it alongside your own code.
-Beyond the convenience of not having to install SFML yourself, this ensures ABI compatibility and simplifies things like specifying static versus shared libraries.
-
-Modifying what version of SFML you want is as easy as changing the `GIT_TAG` argument.
-Currently it uses SFML 3 via the `3.1.0` tag.
-
-## But I want to...
-
-Modify CMake options by adding them as configuration parameters (with a `-D` flag) or by modifying the contents of CMakeCache.txt and rebuilding.
-
-### Not use GitHub
-
-You can use this project without a GitHub account by [downloading the contents](https://github.com/SFML/cmake-sfml-project/archive/refs/heads/master.zip) of the repository as a ZIP archive and unpacking it locally.
-This approach also avoids using Git entirely if you would prefer to not do that.
-
-### Change Compilers
-
-See the variety of [`CMAKE_<LANG>_COMPILER`](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER.html) options.
-In particular you'll want to modify `CMAKE_CXX_COMPILER` to point to the C++ compiler you wish to use.
-
-### Change Compiler Optimizations
-
-CMake abstracts away specific optimizer flags through the [`CMAKE_BUILD_TYPE`](https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html) option.
-By default this project recommends `Release` builds which enable optimizations.
-Other build types include `Debug` builds which enable debug symbols but disable optimizations.
-If you're using a multi-configuration generator (as is often the case on Windows), you can modify the [`CMAKE_CONFIGURATION_TYPES`](https://cmake.org/cmake/help/latest/variable/CMAKE_CONFIGURATION_TYPES.html#variable:CMAKE_CONFIGURATION_TYPES) option.
-
-### Change Generators
-
-While CMake will attempt to pick a suitable default generator, some systems offer a number of generators to choose from.
-Ubuntu, for example, offers Makefiles and Ninja as two potential options.
-For a list of generators, click [here](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html).
-To modify the generator you're using you must reconfigure your project providing a `-G` flag with a value corresponding to the generator you want.
-You can't simply modify an entry in the CMakeCache.txt file unlike the above options.
-Then you may rebuild your project with this new generator.
-
-## More Reading
-
-Here are some useful resources if you want to learn more about CMake:
-
-- [Official CMake Tutorial](https://cmake.org/cmake/help/latest/guide/tutorial/)
-- [How to Use CMake Without the Agonizing Pain - Part 1](https://alexreinking.com/blog/how-to-use-cmake-without-the-agonizing-pain-part-1.html)
-- [How to Use CMake Without the Agonizing Pain - Part 2](https://alexreinking.com/blog/how-to-use-cmake-without-the-agonizing-pain-part-2.html)
-- [Better CMake YouTube series by Jefferon Amstutz](https://www.youtube.com/playlist?list=PL8i3OhJb4FNV10aIZ8oF0AA46HgA2ed8g)
-
-## License
-
-The source code is dual licensed under Public Domain and MIT -- choose whichever you prefer.
+ЩО МОГЛО БИ БУТИ ПОКРАЩЕНО:
+- пофіксити баги в коді колізій (іноді м'яч все одно проникає всередину ракеток, хоча я нібито покривав цей кейс)
+В такому разі зачекайте декілька секунд.
+- архітектура акторів-компонентів краще б була перенесена на чистий ECS-підхід з пулами об'єктів (але щоб самому таке повністю
+імплементувати потрібно більше часу й зусиль). При теперішньому стані архітектури, код не дуже scalable
+- покращити прийняття та обробку рішень ботом, перенести її на "передбачення" позиції м'яча після до 3-4 відскоків, на відміну
+від інтервальних рішень. Можливо, зробити проміжки-інтервали рішень рандомними, а не фіксованими.
+- додати persistence через JSON-файли зі збереженням налаштувань для гри (щоб позбутися хардкодних значень)
+- додати responsive UI, щоб підтримувався не лише Fullscreen mode
+- додати GUI (наприклад, на базі ImGUI для графічного способу управління налаштуваннями гри)
+- додати спрайтів, звуків, різноманітити ігрові assets.
+- краще декомпозувати Engine.cpp, файл занадто великий та містить багато систем в одному місці.
